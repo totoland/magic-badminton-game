@@ -22,7 +22,7 @@ export function createWorld(rng = Math.random) {
     matchId: 0,
     eventId: 0, // bumps on serve / hit / net touch; the CPU re-plans when it changes
     events: [], // 'serve' | 'hit' | 'smash' | 'net' | 'point' | 'gameover' | 'menu' | 'pause'
-    settings: { mode: '1p', difficulty: 'normal', chars: ['lady', 'dog'] },
+    settings: { mode: '1p', difficulty: 'easy', chars: ['lady', 'dog'] },
     menu: { cursor: 0 },
     players: [createPlayer({ side: -1, char: 'lady' }), createPlayer({ side: 1, char: 'dog' })],
     shuttle: createShuttle(),
