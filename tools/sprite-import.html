@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sprite importer</title>
+  <style>
+    body { font: 14px system-ui, sans-serif; background: #0b0d16; color: #e8e8f0; margin: 0; padding: 20px; }
+    h1 { font-size: 18px; } label { display: inline-block; margin: 4px 12px 4px 0; }
+    input[type=number] { width: 64px; } .row { margin: 10px 0; }
+    canvas { image-rendering: pixelated; background: #222; margin: 4px; border: 1px solid #444; }
+    textarea { width: 100%; height: 320px; background: #10141f; color: #cfe; font: 12px monospace; border: 1px solid #333; }
+    button { padding: 6px 14px; }
+    .hint { color: #9aa4c8; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Sprite importer: PNG sprite sheet &rarr; string grids for <code>src/render/sprites.js</code></h1>
+  <p class="hint">Drop an AI-generated sheet. Cells are read left to right, top to bottom, scaled down to the target size
+    with nearest-neighbour sampling, then quantised to a small palette. Background = top-left pixel colour (or alpha).</p>
+  <div class="row">
+    <input type="file" id="file" accept="image/*">
+  </div>
+  <div class="row">
+    <label>Columns <input type="number" id="cols" value="4" min="1"></label>
+    <label>Rows <input type="number" id="rows" value="2" min="1"></label>
+    <label>Target cell width <input type="number" id="tw" value="20" min="4"></label>
+    <label>Target cell height <input type="number" id="th" value="32" min="4"></label>
+    <label>Max colours <input type="number" id="ncol" value="8" min="2" max="24"></label>
+    <label>Bg tolerance <input type="number" id="tol" value="60" min="0" max="255"></label>
+    <label>Trim empty margins <input type="checkbox" id="trim" checked></label>
+    <label>Character name <input type="text" id="name" value="hero" size="10"></label>
+    <button id="go">Convert</button>
+  </div>
+  <div id="preview"></div>
+  <textarea id="out" spellcheck="false"></textarea>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let img = null;
+$('file').addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const url = URL.createObjectURL(f);
+  img = new Image();
+  img.onload = () => { $('cols').value = $('cols').value; convert(); };
+  img.src = url;
+});
+$('go').addEventListener('click', convert);
+
+const LETTERS = 'abegijklmnpqrtuvwxyzAIJKQTUVX0123456789'.split(''); // letters not used by the base palette (H h R Y S s E M W O o B D d L C c Z P F f N G)
+
+function convert() {
+  if (!img) return;
+  const cols = +$('cols').value, rows = +$('rows').value, tw = +$('tw').value, th = +$('th').value;
+  const ncol = +$('ncol').value, tol = +$('tol').value, trim = $('trim').checked, name = $('name').value || 'hero';
+  const cw = Math.floor(img.width / cols), ch = Math.floor(img.height / rows);
+  // background colour from the top-left pixel of the sheet
+  const probe = document.createElement('canvas'); probe.width = img.width; probe.height = img.height;
+  const pctx = probe.getContext('2d', { willReadFrequently: true }); pctx.drawImage(img, 0, 0);
+  const bg = pctx.getImageData(0, 0, 1, 1).data;
+  const isBg = (r, g, b, a) => a < 128 || (Math.abs(r - bg[0]) + Math.abs(g - bg[1]) + Math.abs(b - bg[2]) <= tol);
+
+  // 1. sample every cell to the target size
+  const cells = [];
+  for (let r = 0; r < rows; r += 1) for (let c = 0; c < cols; c += 1) {
+    // trim empty margins inside the cell first so the character fills the target box
+    let sx = c * cw, sy = r * ch, sw = cw, sh = ch;
+    if (trim) {
+      const d = pctx.getImageData(sx, sy, sw, sh).data;
+      let minX = sw, minY = sh, maxX = -1, maxY = -1;
+      for (let y = 0; y < sh; y += 1) for (let x = 0; x < sw; x += 1) {
+        const i = (y * sw + x) * 4;
+        if (!isBg(d[i], d[i + 1], d[i + 2], d[i + 3])) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
+      }
+      if (maxX >= 0) { sx += minX; sy += minY; sw = maxX - minX + 1; sh = maxY - minY + 1; }
+    }
+    const cv = document.createElement('canvas'); cv.width = tw; cv.height = th;
+    const ctx = cv.getContext('2d', { willReadFrequently: true });
+    ctx.imageSmoothingEnabled = false;
+    // keep aspect ratio, feet on the bottom row, centred horizontally
+    const scale = Math.min(tw / sw, th / sh);
+    const dw = Math.max(1, Math.round(sw * scale)), dh = Math.max(1, Math.round(sh * scale));
+    ctx.drawImage(img, sx, sy, sw, sh, Math.floor((tw - dw) / 2), th - dh, dw, dh);
+    cells.push(ctx.getImageData(0, 0, tw, th).data);
+  }
+
+  // 2. palette: most frequent colours (coarsely bucketed), others snap to the nearest
+  const counts = new Map();
+  for (const d of cells) for (let i = 0; i < d.length; i += 4) {
+    if (isBg(d[i], d[i + 1], d[i + 2], d[i + 3])) continue;
+    const key = [d[i], d[i + 1], d[i + 2]].map((v) => Math.round(v / 24) * 24).join(',');
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  const palette = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, ncol).map(([k]) => k.split(',').map(Number));
+  const nearest = (r, g, b) => { let best = 0, bd = Infinity; palette.forEach((p, i) => { const d = (p[0] - r) ** 2 + (p[1] - g) ** 2 + (p[2] - b) ** 2; if (d < bd) { bd = d; best = i; } }); return best; };
+  const hex = (p) => '#' + p.map((v) => Math.min(255, v).toString(16).padStart(2, '0')).join('');
+
+  // 3. grids + preview
+  const preview = $('preview'); preview.innerHTML = '';
+  const frameNames = ['stand', 'run1', 'run2', 'jump'];
+  const viewNames = ['back', 'front'];
+  const grids = {};
+  cells.forEach((d, idx) => {
+    const lines = [];
+    const cv = document.createElement('canvas'); cv.width = tw; cv.height = th; cv.style.width = `${tw * 4}px`; cv.style.height = `${th * 4}px`;
+    const ctx = cv.getContext('2d');
+    for (let y = 0; y < th; y += 1) {
+      let line = '';
+      for (let x = 0; x < tw; x += 1) {
+        const i = (y * tw + x) * 4;
+        if (isBg(d[i], d[i + 1], d[i + 2], d[i + 3])) { line += '.'; continue; }
+        const pi = nearest(d[i], d[i + 1], d[i + 2]);
+        line += LETTERS[pi];
+        ctx.fillStyle = hex(palette[pi]); ctx.fillRect(x, y, 1, 1);
+      }
+      lines.push(line);
+    }
+    preview.appendChild(cv);
+    const view = viewNames[Math.floor(idx / cols)] || `row${Math.floor(idx / cols)}`;
+    const frame = frameNames[idx % cols] || `frame${idx % cols}`;
+    (grids[view] ||= {})[frame] = lines;
+  });
+
+  // 4. output snippet
+  let out = `// ---- ${name}: paste into src/render/sprites.js ----\n`;
+  out += `// 1) add these colours to PALETTE (letters are free in the base palette):\n`;
+  palette.forEach((p, i) => { out += `//   ${LETTERS[i]}: '${hex(p)}',\n`; });
+  out += `\nconst ${name.toUpperCase()}_FRAMES = {\n`;
+  for (const [view, frames] of Object.entries(grids)) {
+    out += `  ${view}: {\n`;
+    for (const [frame, lines] of Object.entries(frames)) {
+      out += `    ${frame}: [\n${lines.map((l) => `      '${l}',`).join('\n')}\n    ],\n`;
+    }
+    out += `  },\n`;
+  }
+  out += `};\n\n// 2) register the character (frames mode: full-body frames, no body/legs split):\n`;
+  out += `// ${name}: { w: ${tw}, h: ${th}, runCycle: ['run1', 'stand', 'run2', 'stand'], views: {\n`;
+  out += `//   back: { frames: ${name.toUpperCase()}_FRAMES.back, hand: { x: ${tw - 3}, y: ${Math.round(th / 2)} }, facing: 1, racket: { idle: 'up', swing: 'fwd' } },\n`;
+  out += `//   front: { frames: ${name.toUpperCase()}_FRAMES.front, hand: { x: 2, y: ${Math.round(th / 2)} }, facing: -1, racket: { idle: 'up', swing: 'fwd' } },\n`;
+  out += `// } },\n// 3) add '${name}' to CHARS and CHAR_NAMES in src/config.js.\n`;
+  $('out').value = out;
+}
+</script>
+</body>
+</html>

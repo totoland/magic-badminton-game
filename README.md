@@ -77,3 +77,23 @@ player, change of ends, and service-box faults (the serve is aimed at the right 
 - `src/layout.js`, `src/touch.js` frames for landscape / portrait, joystick and buttons as virtual keys
 - `src/render/camera.js` fake perspective projection; `render/sprites.js` front/back pixel art;
   `render/renderer.js` court scene; `render/hud.js` text, menus, overlays
+
+## Adding a character from AI-generated art
+
+1. Generate a sprite sheet (prompt template below), 4 columns x 2 rows: top row = back view, bottom row =
+   front view; frames left to right = stand, run1, run2, jump. Solid magenta or transparent background.
+2. Open `tools/sprite-import.html` from the dev server (http://localhost:8080/tools/sprite-import.html), drop
+   the PNG, set the target cell size (about 20x32 for a human, 20x22 for a quadruped) and max colours (8),
+   press Convert. It downsamples with nearest-neighbour, quantises the palette and prints string grids.
+3. Paste the palette lines into `PALETTE`, the frames object into `src/render/sprites.js`, register the
+   character in `CHAR_DEFS` (frames mode) and add its id to `CHARS` / `CHAR_NAMES` in `src/config.js`.
+   The racket is drawn by the game at the `hand` anchor, so generate characters with empty hands.
+
+Prompt template (works with most image generators; attach your reference design as the image prompt):
+
+> Pixel art sprite sheet of [your character], retro 8-bit NES style, for a sports game seen from behind
+> the player. Grid of 4 columns and 2 rows, evenly spaced cells, same scale in every cell. Top row: the
+> character seen from BEHIND. Bottom row: the character FACING the viewer. Columns left to right:
+> standing idle, running step 1, running step 2, jumping with legs tucked. Full body, feet on the same
+> baseline in every cell, empty hands. Chunky pixels, flat colours, maximum 8 colours, no anti-aliasing,
+> no gradients, no shadows, no outlines glow, no text, solid magenta background #FF00FF.

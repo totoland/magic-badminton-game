@@ -213,6 +213,9 @@ const RACKET_DIAG = [
 /**
  * Character definitions. `views.back` is used for the near player, `views.front` for the far one.
  * hand = racket grip anchor in the view's grid; facing = which way the swing racket points (+1 right).
+ * Two ways to describe a view:
+ *  - body + legs: `body` grid on top of shared `legs` frames (the built-in characters)
+ *  - frames: `frames: { stand, run1, run2, jump }` full-body grids (imported art, see tools/sprite-import.html)
  */
 export const CHAR_DEFS = {
   lady: {
@@ -299,7 +302,6 @@ export function legsFrame(def, anim, animT) {
 export function drawCharacter(ctx, char, view, sx, sy, scale, anim = 'idle', animT = 0, airborne = false) {
   const def = CHAR_DEFS[char];
   const v = def.views[view];
-  const bodyRows = v.body.length;
   const bob = anim === 'idle' && Math.floor(animT * 2) % 2 === 1 ? 1 : 0;
   const w = def.w * scale;
   const h = def.h * scale;
@@ -307,9 +309,15 @@ export function drawCharacter(ctx, char, view, sx, sy, scale, anim = 'idle', ani
   const y0 = Math.round(sy - h);
   const legsAnim = anim === 'swing' ? (airborne ? 'jump' : 'idle') : anim;
   const legsKey = legsFrame(def, legsAnim, animT);
-  const legs = def.legs[legsKey];
-  ctx.drawImage(gridCanvas(`${char}-legs-${legsKey}`, legs), x0, Math.round(y0 + bodyRows * scale), w, Math.round(legs.length * scale));
-  ctx.drawImage(gridCanvas(`${char}-${view}-body`, v.body), x0, y0 + bob, w, Math.round(bodyRows * scale));
+  if (v.frames) {
+    const frame = v.frames[legsKey] || v.frames.stand;
+    ctx.drawImage(gridCanvas(`${char}-${view}-${legsKey}`, frame), x0, y0 + bob, w, Math.round(frame.length * scale));
+  } else {
+    const bodyRows = v.body.length;
+    const legs = def.legs[legsKey];
+    ctx.drawImage(gridCanvas(`${char}-legs-${legsKey}`, legs), x0, Math.round(y0 + bodyRows * scale), w, Math.round(legs.length * scale));
+    ctx.drawImage(gridCanvas(`${char}-${view}-body`, v.body), x0, y0 + bob, w, Math.round(bodyRows * scale));
+  }
 
   const orient = anim === 'swing' ? v.racket.swing : v.racket.idle;
   const rk = racketSprite(orient, v.facing);
