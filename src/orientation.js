@@ -7,17 +7,19 @@ export function lockSupported(win = globalThis) {
   return !!(scr && scr.orientation && typeof scr.orientation.lock === 'function' && win.document && win.document.documentElement.requestFullscreen);
 }
 
-/** Try fullscreen + landscape lock. Resolves true when the lock took. Must run inside a user gesture. */
-export async function lockLandscape(win = globalThis) {
+/** Try fullscreen + orientation lock ('landscape' | 'portrait'). Resolves true when the lock took. Must run inside a user gesture. */
+export async function lockOrientation(orientation, win = globalThis) {
   try {
     const doc = win.document;
     if (!doc.fullscreenElement) await doc.documentElement.requestFullscreen({ navigationUI: 'hide' });
-    await win.screen.orientation.lock('landscape');
+    await win.screen.orientation.lock(orientation);
     return true;
   } catch {
     return false;
   }
 }
+
+export const lockLandscape = (win) => lockOrientation('landscape', win);
 
 export async function unlockOrientation(win = globalThis) {
   try {

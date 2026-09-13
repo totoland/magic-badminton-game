@@ -8,7 +8,7 @@ import { drawHud } from './render/hud.js';
 import { buildLayout } from './layout.js';
 import { createTouch } from './touch.js';
 import { audio } from './audio.js';
-import { lockSupported, lockLandscape, unlockOrientation, shouldSuggestRotate, readDismissed, writeDismissed } from './orientation.js';
+import { lockSupported, lockOrientation, unlockOrientation, shouldSuggestRotate, readDismissed, writeDismissed } from './orientation.js';
 
 const scene = document.createElement('canvas');
 scene.width = SCENE.w;
@@ -55,12 +55,17 @@ function maybeSuggestRotate() {
   prefs.rotatePrompt = shouldSuggestRotate({ touch: touchMode, portrait: L.portrait, dismissed: readDismissed() }) ? 'open' : 'closed';
 }
 async function onAction(action) {
-  if (action === 'keep') { prefs.rotatePrompt = 'done'; writeDismissed(); return; }
+  if (action === 'keep') {
+    prefs.rotatePrompt = 'done';
+    writeDismissed();
+    if (prefs.lockSupported) await lockOrientation('portrait'); // fullscreen either way where the browser allows it
+    return;
+  }
   if (action === 'rotate') {
     prefs.rotatePrompt = 'done';
     writeDismissed();
     if (!prefs.lockSupported) { toast('TURN YOUR PHONE SIDEWAYS'); return; }
-    const ok = await lockLandscape();
+    const ok = await lockOrientation('landscape');
     if (!ok) toast('ROTATE NOT ALLOWED HERE: TURN THE PHONE');
     return;
   }

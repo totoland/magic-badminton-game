@@ -193,8 +193,8 @@ function drawRotatePrompt(ctx, L, prefs) {
   const P = L.rotatePrompt;
   overlayScene(ctx, L, 0.6);
   box(ctx, P.box.x, P.box.y, P.box.w, P.box.h, { line: L.outline });
-  text(ctx, 'PLAY IN LANDSCAPE?', P.box.x + P.box.w / 2, P.box.y + 28, { size: 24, color: '#ffd166' });
-  const sub = prefs.lockSupported ? 'ROTATE = FULLSCREEN + LOCK' : 'TURN YOUR PHONE SIDEWAYS';
+  text(ctx, prefs.lockSupported ? 'FULLSCREEN: WHICH WAY?' : 'PLAY IN LANDSCAPE?', P.box.x + P.box.w / 2, P.box.y + 28, { size: 24, color: '#ffd166' });
+  const sub = prefs.lockSupported ? 'LOCKS THE SCREEN, HIDES THE BROWSER BAR' : 'TURN YOUR PHONE SIDEWAYS';
   text(ctx, sub, P.box.x + P.box.w / 2, P.box.y + 72, { size: 16, color: '#cfd8ff' });
   drawBigButton(ctx, L, P.rotate);
   drawBigButton(ctx, L, P.keep);

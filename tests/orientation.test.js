@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { shouldSuggestRotate, lockSupported, readDismissed, writeDismissed } from '../src/orientation.js';
+import { shouldSuggestRotate, lockSupported, readDismissed, writeDismissed, lockOrientation } from '../src/orientation.js';
 
 test('the rotate suggestion shows once, only for touch devices in portrait', () => {
   assert.equal(shouldSuggestRotate({ touch: true, portrait: true, dismissed: false }), true);
@@ -18,4 +18,16 @@ test('lock support detection and the dismissed flag survive missing browser APIs
   writeDismissed(storage);
   assert.equal(readDismissed(storage), true);
   assert.equal(readDismissed({ getItem() { throw new Error('blocked'); } }), false);
+});
+
+test('lockOrientation goes fullscreen first, then locks; failures resolve false', async () => {
+  const calls = [];
+  const win = {
+    document: { fullscreenElement: null, documentElement: { requestFullscreen: async () => { calls.push('fs'); } } },
+    screen: { orientation: { lock: async (o) => { calls.push(`lock:${o}`); } } },
+  };
+  assert.equal(await lockOrientation('landscape', win), true);
+  assert.deepEqual(calls, ['fs', 'lock:landscape']);
+  const bad = { document: { fullscreenElement: null, documentElement: { requestFullscreen: async () => { throw new Error('no'); } } }, screen: { orientation: { lock: async () => {} } } };
+  assert.equal(await lockOrientation('portrait', bad), false);
 });

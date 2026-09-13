@@ -117,8 +117,8 @@ export function portraitLayout(touch) {
     muteAt: { x: 42, y: 74, size: 16, align: 'center' },
     rotatePrompt: {
       box: { x: 60, y: sceneY + 200, w: 520, h: 330 },
-      rotate: { x: 100, y: sceneY + 330, w: 440, h: 84, label: 'ROTATE' },
-      keep: { x: 100, y: sceneY + 430, w: 440, h: 84, label: 'KEEP PORTRAIT' },
+      rotate: { x: 100, y: sceneY + 330, w: 440, h: 84, label: 'LANDSCAPE' },
+      keep: { x: 100, y: sceneY + 430, w: 440, h: 84, label: 'PORTRAIT' },
     },
   };
 }
