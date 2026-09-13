@@ -8,6 +8,7 @@ import { drawHud } from './render/hud.js';
 import { buildLayout } from './layout.js';
 import { createTouch } from './touch.js';
 import { audio } from './audio.js';
+import { lockSupported, lockLandscape, unlockOrientation, shouldSuggestRotate, readDismissed, writeDismissed } from './orientation.js';
 
 const scene = document.createElement('canvas');
 scene.width = SCENE.w;
@@ -47,11 +48,30 @@ window.addEventListener('orientationchange', resize);
 const kb = new Keyboard().attach(window);
 const world = createWorld();
 const renderer = createRenderer(scene);
+const prefs = { rotatePrompt: 'closed', lockSupported: lockSupported(), toast: '', toastUntil: 0 };
+function toast(msg, seconds = 2.5) { prefs.toast = msg; prefs.toastUntil = world.time + seconds; }
+function maybeSuggestRotate() {
+  if (prefs.rotatePrompt === 'done') return;
+  prefs.rotatePrompt = shouldSuggestRotate({ touch: touchMode, portrait: L.portrait, dismissed: readDismissed() }) ? 'open' : 'closed';
+}
+async function onAction(action) {
+  if (action === 'keep') { prefs.rotatePrompt = 'done'; writeDismissed(); return; }
+  if (action === 'rotate') {
+    prefs.rotatePrompt = 'done';
+    writeDismissed();
+    if (!prefs.lockSupported) { toast('TURN YOUR PHONE SIDEWAYS'); return; }
+    const ok = await lockLandscape();
+    if (!ok) toast('ROTATE NOT ALLOWED HERE: TURN THE PHONE');
+    return;
+  }
+  if (action === 'unrotate') await unlockOrientation();
+}
 const touch = createTouch({
-  canvas: screen, kb, world, getLayout: () => L, getScale: () => cssScale,
-  onTouchDetected: () => { touchMode = true; resize(); },
+  canvas: screen, kb, world, getLayout: () => L, getScale: () => cssScale, prefs, onAction,
+  onTouchDetected: () => { touchMode = true; resize(); maybeSuggestRotate(); },
 });
 resize();
+maybeSuggestRotate();
 let ai = null;
 let aiMatchId = -1;
 
@@ -103,7 +123,7 @@ function compose() {
     fctx.fillRect(L.scene.x + L.scene.w, 0, 2, L.frame.h);
   }
   fctx.drawImage(scene, L.scene.x, L.scene.y, L.scene.w, L.scene.h);
-  drawHud(fctx, world, L, { touch, muted: audio.muted });
+  drawHud(fctx, world, L, { touch, muted: audio.muted, prefs });
   sctx.drawImage(frame, 0, 0, screen.width, screen.height);
 }
 
@@ -130,7 +150,7 @@ window.addEventListener('keydown', () => audio.init(), { once: true });
 screen.addEventListener('pointerdown', () => audio.init(), { once: true });
 
 // Exposed for debugging and scripted checks in the console.
-window.__badminton = { world, tick, kb, compose, getLayout: () => L, getScale: () => cssScale };
+window.__badminton = { world, tick, kb, compose, prefs, getLayout: () => L, getScale: () => cssScale };
 
 const fontReady = document.fonts ? document.fonts.load('8px "Press Start 2P"').catch(() => null) : Promise.resolve();
 Promise.race([fontReady, new Promise((r) => setTimeout(r, 1500))]).then(() => {

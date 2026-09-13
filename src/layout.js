@@ -12,6 +12,7 @@ const PORTRAIT_BUTTONS = [
 const PORTRAIT_SYSTEM_BUTTONS = [
   { id: 'pause', code: 'Escape', x: 568, y: 16, w: 60, h: 52, label: 'II', system: true },
   { id: 'mute', code: 'KeyM', x: 12, y: 16, w: 60, h: 52, label: 'M', system: true },
+  { id: 'rotate', action: 'rotate', x: 84, y: 16, w: 76, h: 52, label: 'ROT', system: true },
 ];
 const PORTRAIT_STICK = { cx: 190, cy: 950, r: 120, knob: 50, grab: 180 };
 
@@ -24,6 +25,7 @@ const LANDSCAPE_BUTTONS = [
   { id: 'smash', code: 'Space', x: 496, y: 172, w: 128, h: 100, label: 'SMASH', accent: true },
   { id: 'pause', code: 'Escape', x: 592, y: 6, w: 44, h: 28, label: 'II', system: true },
   { id: 'mute', code: 'KeyM', x: 544, y: 6, w: 44, h: 28, label: 'M', system: true },
+  { id: 'unrotate', action: 'unrotate', x: 484, y: 6, w: 56, h: 28, label: 'PORT', system: true },
 ];
 const LANDSCAPE_STICK = { cx: 80, cy: 170, r: 56, knob: 24, grab: 78 };
 
@@ -74,6 +76,7 @@ export function landscapeLayout(touch) {
     buttonAlpha: 1,
     outline: 1,
     muteAt: { x: touch ? 566 : W - 4, y: touch ? 38 : 40, size: 8, align: touch ? 'center' : 'right' },
+    rotatePrompt: null,
   };
 }
 
@@ -112,6 +115,11 @@ export function portraitLayout(touch) {
     buttonAlpha: 1,
     outline: 3,
     muteAt: { x: 42, y: 74, size: 16, align: 'center' },
+    rotatePrompt: {
+      box: { x: 60, y: sceneY + 200, w: 520, h: 330 },
+      rotate: { x: 100, y: sceneY + 330, w: 440, h: 84, label: 'ROTATE' },
+      keep: { x: 100, y: sceneY + 430, w: 440, h: 84, label: 'KEEP PORTRAIT' },
+    },
   };
 }
 

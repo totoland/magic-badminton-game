@@ -189,8 +189,19 @@ export function drawTitle(ctx, world, L) {
   text(ctx, L.portrait ? 'RALLY TO 21 - WIN BY 2 - CAP 30' : 'RALLY TO 21, WIN BY 2, CAP 30', T.cx, L.help.rulesY, { size: L.help.size, color: '#9aa4c8' });
 }
 
+function drawRotatePrompt(ctx, L, prefs) {
+  const P = L.rotatePrompt;
+  overlayScene(ctx, L, 0.6);
+  box(ctx, P.box.x, P.box.y, P.box.w, P.box.h, { line: L.outline });
+  text(ctx, 'PLAY IN LANDSCAPE?', P.box.x + P.box.w / 2, P.box.y + 28, { size: 24, color: '#ffd166' });
+  const sub = prefs.lockSupported ? 'ROTATE = FULLSCREEN + LOCK' : 'TURN YOUR PHONE SIDEWAYS';
+  text(ctx, sub, P.box.x + P.box.w / 2, P.box.y + 72, { size: 16, color: '#cfd8ff' });
+  drawBigButton(ctx, L, P.rotate);
+  drawBigButton(ctx, L, P.keep);
+}
+
 /** Draw everything that is not the court scene. */
-export function drawHud(ctx, world, L, { touch, muted } = {}) {
+export function drawHud(ctx, world, L, { touch, muted, prefs = {} } = {}) {
   if (world.state === STATES.TITLE) {
     drawTitle(ctx, world, L);
   } else {
@@ -203,4 +214,9 @@ export function drawHud(ctx, world, L, { touch, muted } = {}) {
   for (const b of activeButtons(L, world)) drawButton(ctx, L, b, touch ? touch.isDown(b.id) : false);
   if (L.joystick && playButtonsActive(world)) drawJoystick(ctx, L, touch ? touch.getStick() : null);
   if (muted) text(ctx, 'MUTE', L.muteAt.x, L.muteAt.y, { align: L.muteAt.align, color: '#ffd166', size: L.muteAt.size });
+  if (prefs.toast && world.time < prefs.toastUntil) {
+    const y = L.portrait ? L.scene.y + L.scene.h - 40 : L.scene.y + L.scene.h - 20;
+    text(ctx, prefs.toast, L.scene.x + L.scene.w / 2, y, { size: L.portrait ? 16 : 8, color: '#ffd166' });
+  }
+  if (prefs.rotatePrompt === 'open' && L.rotatePrompt) drawRotatePrompt(ctx, L, prefs);
 }

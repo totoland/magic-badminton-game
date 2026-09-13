@@ -3,7 +3,7 @@
 import { buttonAt, menuRowAt, inRect, stickHit, stickKeys, playButtonsActive } from './layout.js';
 import { STATES } from './game.js';
 
-export function createTouch({ canvas, kb, world, getLayout, getScale, onTouchDetected }) {
+export function createTouch({ canvas, kb, world, getLayout, getScale, onTouchDetected, prefs = {}, onAction = () => {} }) {
   const active = new Map(); // pointerId -> button
   const down = new Set(); // button ids currently held (for drawing)
   const stick = { pointerId: null, dx: 0, dy: 0, keys: new Set() };
@@ -14,8 +14,8 @@ export function createTouch({ canvas, kb, world, getLayout, getScale, onTouchDet
     const s = getScale();
     return { x: (e.clientX - r.left) / s, y: (e.clientY - r.top) / s };
   };
-  const press = (b) => { down.add(b.id); kb.press(b.code); };
-  const release = (b) => { down.delete(b.id); kb.release(b.code); };
+  const press = (b) => { down.add(b.id); if (b.code) kb.press(b.code); };
+  const release = (b) => { down.delete(b.id); if (b.code) kb.release(b.code); };
 
   function stickApply(next) {
     for (const k of stick.keys) if (!next.has(k)) kb.release(k);
@@ -66,12 +66,18 @@ export function createTouch({ canvas, kb, world, getLayout, getScale, onTouchDet
     try { canvas.setPointerCapture(e.pointerId); } catch { /* not supported */ }
     const L = getLayout();
     const p = toFrame(e);
+    if (prefs.rotatePrompt === 'open' && L.rotatePrompt) { // modal suggestion: only its two buttons react
+      if (inRect(p, L.rotatePrompt.rotate)) onAction('rotate');
+      else if (inRect(p, L.rotatePrompt.keep)) onAction('keep');
+      return;
+    }
     if (stick.pointerId === null && playButtonsActive(world) && stickHit(L, p)) {
       stick.pointerId = e.pointerId;
       stickMove(L, p);
       return;
     }
     const b = buttonAt(L, p, world);
+    if (b && b.action) { onAction(b.action); return; }
     if (b) { active.set(e.pointerId, b); press(b); return; }
     tapZone(L, p);
   });

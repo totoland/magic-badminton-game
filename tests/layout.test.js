@@ -12,6 +12,7 @@ for (const orientation of ['portrait', 'landscape']) {
     for (const r of L.menu.rows) assert.ok(within(r, L.frame));
     assert.ok(within(L.start, L.frame));
     for (const r of [L.gameover.rematch, L.gameover.back, L.pause.resume]) if (r) assert.ok(within(r, L.frame));
+    if (L.rotatePrompt) for (const r of [L.rotatePrompt.box, L.rotatePrompt.rotate, L.rotatePrompt.keep]) assert.ok(within(r, L.frame));
   });
 
   test(`${orientation}: joystick sits inside the frame, clear of the buttons`, () => {
@@ -78,4 +79,15 @@ test('landscape touch: controls live in the side gutters, never over the court; 
   assert.equal(D.frame.w, 320);
   assert.equal(D.scene.x, 0);
   assert.equal(D.joystick, null);
+});
+
+test('rotate button exists in portrait, PORT button in landscape touch, neither has a key code', () => {
+  const P = buildLayout('portrait', true);
+  const rot = P.buttons.find((b) => b.id === 'rotate');
+  assert.ok(rot && rot.system && rot.action === 'rotate' && !rot.code);
+  assert.ok(P.rotatePrompt, 'portrait has the prompt geometry');
+  const Lt = buildLayout('landscape', true);
+  const un = Lt.buttons.find((b) => b.id === 'unrotate');
+  assert.ok(un && un.action === 'unrotate');
+  assert.equal(buildLayout('landscape', false).rotatePrompt, null);
 });

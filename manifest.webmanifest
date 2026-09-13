@@ -4,7 +4,7 @@
   "description": "Pikachu Volleyball-style badminton. Farm girl vs Bug the dog.",
   "start_url": "./",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#0b0d16",
   "theme_color": "#0b0d16",
   "icons": [

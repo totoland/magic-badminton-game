@@ -58,7 +58,10 @@ score header above and touch controls below: a virtual joystick for the left thu
 horizontal tilt at contact aims the shot) and `LOB`, `DROP`, and a big `SMASH` for the right thumb.
 Tap a menu row to change it, tap START to play, `II` pauses, `M` mutes. Landscape on a touch device
 widens the frame and puts the joystick in the left gutter and the buttons in the right one, so the
-court stays unobstructed. The page ships a web manifest for "Add to Home Screen"
+court stays unobstructed. On the first portrait visit a prompt offers to play in landscape: ROTATE goes
+fullscreen and locks the orientation where the browser allows it (Android Chrome); iOS has no orientation
+API, so there it only asks you to turn the phone. The `ROT` header button does the same later, `PORT`
+in landscape releases the lock. The answer is remembered per device. The page ships a web manifest for "Add to Home Screen"
 (iOS home-screen icons need a PNG, which is not included yet).
 
 ## Rules
