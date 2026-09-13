@@ -1,7 +1,7 @@
 {
   "name": "Badminton",
   "short_name": "Badminton",
-  "description": "Pikachu Volleyball-style badminton. Farm girl vs malamute.",
+  "description": "Pikachu Volleyball-style badminton. Farm girl vs Bug the dog.",
   "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",

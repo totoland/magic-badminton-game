@@ -12,18 +12,14 @@ test('every selectable character has consistent back/front art and a name', () =
       const v = def.views[view];
       assert.ok(v, `${id} ${view}`);
       const palette = def.palette || PALETTE;
-      const grids = v.frames ? Object.values(v.frames) : [v.body, ...Object.values(def.legs)];
+      const grids = Object.values(v.frames);
       for (const rows of grids) {
         for (const row of rows) {
           assert.equal(row.length, def.w, `${id} ${view}: row width ${row.length} != ${def.w}`);
           for (const ch of row) if (ch !== '.') assert.ok(palette[ch], `${id} ${view}: unknown palette letter '${ch}'`);
         }
       }
-      if (v.frames) {
-        for (const key of ['stand', 'run1', 'run2', 'jump']) assert.equal(v.frames[key].length, def.h, `${id} ${view} ${key} height`);
-      } else {
-        assert.equal(v.body.length + def.legs.stand.length, def.h, `${id} ${view}: body + legs = h`);
-      }
+      for (const key of ['stand', 'run1', 'run2', 'jump']) assert.equal(v.frames[key].length, def.h, `${id} ${view} ${key} height`);
       assert.ok(v.hand.x >= 0 && v.hand.x < def.w && v.hand.y >= 0 && v.hand.y < def.h, `${id} ${view}: hand anchor inside the sprite`);
     }
   }

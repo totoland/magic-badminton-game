@@ -152,7 +152,7 @@ export function drawTitle(ctx, world, L) {
   const st = world.settings;
   const T = L.title;
   text(ctx, 'BADMINTON', T.cx, T.y, { size: T.size, color: '#ffd166' });
-  text(ctx, 'FARM GIRL  vs  MALAMUTE', T.cx, T.subY, { color: '#cfd8ff', size: T.subSize });
+  text(ctx, `${CHAR_NAMES[st.chars[0]]}  vs  ${CHAR_NAMES[st.chars[1]]}`, T.cx, T.subY, { color: '#cfd8ff', size: T.subSize });
 
   const values = {
     mode: ['MODE', st.mode === '1p' ? '1P VS CPU' : '2P LOCAL'],

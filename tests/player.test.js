@@ -34,7 +34,7 @@ test('movement is screen-relative on both sides and clamped to the own half', ()
   for (let i = 0; i < 120; i += 1) updatePlayer(p1, it({ up: true, right: true }), 1 / 60);
   assert.equal(p1.z, -PLAYER.netClamp, 'P1 stops at the net');
   assert.ok(p1.x > 50);
-  const p2 = createPlayer({ side: 1, char: 'dog' });
+  const p2 = createPlayer({ side: 1, char: 'bug' });
   placePlayer(p2, 0, 100);
   for (let i = 0; i < 120; i += 1) updatePlayer(p2, it({ down: true }), 1 / 60);
   assert.equal(p2.z, PLAYER.netClamp, 'P2 moving down on screen reaches the net');

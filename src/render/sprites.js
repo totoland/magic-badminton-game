@@ -1,188 +1,13 @@
 // Pixel art as string grids. One character per palette entry, '.' = transparent.
 // Each character has a BACK view (near player, seen from behind) and a FRONT view (far player).
-// Composites are pre-rendered to offscreen canvases on first use and drawn scaled by depth.
-// Imported characters (tools/sprite-import.html) live in ./chars/ with their own palettes.
+// Frames are pre-rendered to offscreen canvases on first use and drawn scaled by depth.
+// Characters live in ./chars/ (made with tools/sprite-import.html) with their own palettes.
 import { BUG_DEF } from './chars/bug.js';
 import { LADY_DEF } from './chars/lady.js';
 
 export const PALETTE = {
-  // farm girl
-  H: '#e9c46a', h: '#b58a34', R: '#d64545', Y: '#f0c84a', S: '#f8cfa5', s: '#e0a97a',
-  E: '#2a2a2a', M: '#c94a4a', W: '#fff5e1', O: '#4a7bd0', o: '#35589a', B: '#6b4423',
-  // malamute
-  D: '#3b3f46', d: '#6e7480', L: '#a3a9b3', C: '#f5f2ec', c: '#d9d5cd', Z: '#151515', P: '#e8748c',
-  // racket
+  // racket (imported characters bring their own palettes)
   F: '#d94b3a', f: '#8f2f24', N: '#e8e8e8', G: '#2f2f2f',
-};
-
-const LADY_FRONT_BODY = [
-  '......HHHHHH......',
-  '.....HHHHHHHH.....',
-  '.....HHRRRRHH.....',
-  '..HHHHHHHHHHHHH...',
-  '.hhhhhhhhhhhhhhh..',
-  '...YYYYYYYYYYY....',
-  '..YYSSSSSSSSSYY...',
-  '..YSSSSSSSSSSSY...',
-  '..YSSSESSSSESSY...',
-  '..YSSSSSSSSSSSY...',
-  '..YYSSSSMMSSSSY...',
-  '..YY.SSSSSSSSS....',
-  '..YY..sssssss.....',
-  '..YY..WWWWWWW.....',
-  '..YY.WWOOOOOWW....',
-  '..YY.SWOOOOOWS....',
-  '..Y..SOOOOOOOS....',
-  '.....OOOOOOOOO....',
-  '.....OOOOOOOOO....',
-  '.....OoooooooO....',
-  '.....OOOOOOOOO....',
-  '.....ooooooooo....',
-];
-
-const LADY_BACK_BODY = [
-  '......HHHHHH......',
-  '.....HHHHHHHH.....',
-  '.....HHHHHHHH.....',
-  '..HHHHHHHHHHHHH...',
-  '.hhhhhhhhhhhhhhh..',
-  '...YYYYYYYYYYY....',
-  '..YYYYYYYYYYYYY...',
-  '..YYYYYYYYYYYYY...',
-  '..YYYYYYYYYYYYY...',
-  '...YYYYYYYYYYY....',
-  '....YYYYYYYYY.....',
-  '.....YYYYYYY......',
-  '......sYYYs.......',
-  '....WWOOOYOOOWW...',
-  '...SWWOOOYOOOWWS..',
-  '...SWWOOOYOOOWWS..',
-  '...S.OOOOYOOOO.S..',
-  '.....OOOOYOOOO....',
-  '.....OOOOOOOOO....',
-  '.....OoooooooO....',
-  '.....OOOOOOOOO....',
-  '.....ooooooooo....',
-];
-
-const LADY_LEGS = {
-  stand: [
-    '......OO..OO......',
-    '......OO..OO......',
-    '......OO..OO......',
-    '......oo..oo......',
-    '......SS..SS......',
-    '......SS..SS......',
-    '......BB..BB......',
-    '......BBB.BBB.....',
-    '.....BBBB.BBBB....',
-  ],
-  run1: [
-    '.....OOO..OOO.....',
-    '....OO......OO....',
-    '....OO......OO....',
-    '...oo........oo...',
-    '...SS........SS...',
-    '...SS........SS...',
-    '...BB........BB...',
-    '..BBB........BBB..',
-    '..BBBB......BBBB..',
-  ],
-  run2: [
-    '......OO..OO......',
-    '.....OO...OO......',
-    '....OO....OO......',
-    '....oo....oo......',
-    '...SS.....SS......',
-    '...SS.....SS......',
-    '...BB.....BB......',
-    '..BBB.....BBB.....',
-    '..BBBB...BBBB.....',
-  ],
-  jump: [
-    '......OO..OO......',
-    '......OO..OO......',
-    '.....OO....OO.....',
-    '.....oo....oo.....',
-    '.....SS....SS.....',
-    '....SS......SS....',
-    '....BB......BB....',
-    '...BBB......BBB...',
-    '...BBBB....BBBB...',
-  ],
-};
-
-const DOG_FRONT_BODY = [
-  '....DD......DD......',
-  '...DDDD....DDDD.....',
-  '...DDDDDDDDDDDD.....',
-  '..DDDDDDDDDDDDDD....',
-  '..DDCCDDDDDDCCDD....',
-  '..DdddDDDDDDdddD....',
-  '..DdEdDDDDDDdEdD....',
-  '..DCCCCDDDDCCCCD....',
-  '..CCCCCCCCCCCCCC....',
-  '..CCCCCCZZCCCCCC....',
-  '...CCCCCZZCCCCC.....',
-  '...CCCCCPPCCCCC.....',
-  '....CCCCCCCCCC......',
-  '...CCCCCCCCCCCC.....',
-  '..CCCCCCCCCCCCCC....',
-  '..CCCCCCCCCCCCCC....',
-];
-
-const DOG_BACK_BODY = [
-  '....DD......DD......',
-  '...DDDD....DDDD.....',
-  '...DDDDDDDDDDDD.....',
-  '...DDDDDDDDDDDD.....',
-  '....DDDDDDDDDD......',
-  '.....DDDDDDDD.......',
-  '...DDDDDDDDDDDDLL...',
-  '..DDDDDDDDDDDDDLLL..',
-  '..DDDDDDDDDDDDLLLL..',
-  '..ddDDDDDDDDDDdLLd..',
-  '..ddddddddddddddL...',
-  '..dddddddddddddd....',
-  '..CCddddddddddCC....',
-  '..CCCCddddddCCCC....',
-  '..CCCCCCCCCCCCCC....',
-  '...CCCCCCCCCCCC.....',
-];
-
-const DOG_LEGS = {
-  stand: [
-    '...CCC......CCC.....',
-    '...CCC......CCC.....',
-    '...CCC......CCC.....',
-    '...ccc......ccc.....',
-    '..cccc......cccc....',
-    '....................',
-  ],
-  run1: [
-    '..CCC........CCC....',
-    '..CCC........CCC....',
-    '...CCC......CCC.....',
-    '...ccc......ccc.....',
-    '..cccc......cccc....',
-    '....................',
-  ],
-  run2: [
-    '....CCC....CCC......',
-    '....CCC....CCC......',
-    '...CCC......CCC.....',
-    '...ccc......ccc.....',
-    '..cccc......cccc....',
-    '....................',
-  ],
-  jump: [
-    '....CCC....CCC......',
-    '....CCC....CCC......',
-    '.....CC....CC.......',
-    '.....cc....cc.......',
-    '....................',
-    '....................',
-  ],
 };
 
 const RACKET_UP = [
@@ -214,31 +39,13 @@ const RACKET_DIAG = [
 ];
 
 /**
- * Character definitions. `views.back` is used for the near player, `views.front` for the far one.
+ * Character definitions, keyed by the ids in config CHARS. Imported characters live in ./chars/ and
+ * describe each view as full-body frames { stand, run1, run2, jump } with their own palette.
  * hand = racket grip anchor in the view's grid; facing = which way the swing racket points (+1 right).
- * Two ways to describe a view:
- *  - body + legs: `body` grid on top of shared `legs` frames (the built-in characters)
- *  - frames: `frames: { stand, run1, run2, jump }` full-body grids (imported art, see tools/sprite-import.html)
  */
-export const CHAR_DEFS = {
-  lady: {
-    w: 18, h: 31, legs: LADY_LEGS, runCycle: ['run1', 'stand', 'run2', 'stand'],
-    views: {
-      back: { body: LADY_BACK_BODY, hand: { x: 15, y: 15 }, facing: 1, racket: { idle: 'up', swing: 'fwd' } },
-      front: { body: LADY_FRONT_BODY, hand: { x: 2, y: 15 }, facing: -1, racket: { idle: 'up', swing: 'fwd' } },
-    },
-  },
-  dog: {
-    w: 20, h: 22, legs: DOG_LEGS, runCycle: ['run1', 'stand', 'run2', 'stand'],
-    views: {
-      back: { body: DOG_BACK_BODY, hand: { x: 14, y: 3 }, facing: 1, racket: { idle: 'fwd', swing: 'up' } },
-      front: { body: DOG_FRONT_BODY, hand: { x: 10, y: 10 }, facing: 1, racket: { idle: 'fwd', swing: 'diag' } },
-    },
-  },
-};
-
+export const CHAR_DEFS = {};
+CHAR_DEFS.lady = LADY_DEF;
 CHAR_DEFS.bug = BUG_DEF;
-CHAR_DEFS.lady = LADY_DEF; // Toto's imported farm girl replaces the built-in one (kept above as LADY_* grids)
 
 function rotateCW(rows) {
   const h = rows.length;
@@ -315,15 +122,8 @@ export function drawCharacter(ctx, char, view, sx, sy, scale, anim = 'idle', ani
   const y0 = Math.round(sy - h);
   const legsAnim = anim === 'swing' ? (airborne ? 'jump' : 'idle') : anim;
   const legsKey = legsFrame(def, legsAnim, animT);
-  if (v.frames) {
-    const frame = v.frames[legsKey] || v.frames.stand;
-    ctx.drawImage(gridCanvas(`${char}-${view}-${legsKey}`, frame, false, def.palette || PALETTE), x0, y0 + bob, w, Math.round(frame.length * scale));
-  } else {
-    const bodyRows = v.body.length;
-    const legs = def.legs[legsKey];
-    ctx.drawImage(gridCanvas(`${char}-legs-${legsKey}`, legs), x0, Math.round(y0 + bodyRows * scale), w, Math.round(legs.length * scale));
-    ctx.drawImage(gridCanvas(`${char}-${view}-body`, v.body), x0, y0 + bob, w, Math.round(bodyRows * scale));
-  }
+  const frame = v.frames[legsKey] || v.frames.stand;
+  ctx.drawImage(gridCanvas(`${char}-${view}-${legsKey}`, frame, false, def.palette || PALETTE), x0, y0 + bob, w, Math.round(frame.length * scale));
 
   const orient = anim === 'swing' ? v.racket.swing : v.racket.idle;
   const rk = racketSprite(orient, v.facing);

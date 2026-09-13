@@ -2,7 +2,7 @@
 
 Arcade badminton with an NES Tennis style camera: you look over the near player's shoulder, the court
 runs away from you in fake perspective, the opponent plays at the far end. Vanilla JS + Canvas, ES modules,
-no dependencies, no image assets. Farm girl vs a one-year-old Alaskan Malamute holding the racket in its mouth.
+no dependencies, no image assets. Characters: FARM GIRL and BUG the dog, both imported pixel art.
 
 The earlier side-view version (Pikachu Volleyball camera) is kept frozen in `archive/sideview/`.
 
@@ -86,7 +86,7 @@ player, change of ends, and service-box faults (the serve is aimed at the right 
    the PNG, set the target cell size and max colours, press Convert. It detects the AI's fake pixel size,
    averages blocks down, quantises the palette with k-means, drops background halo pixels and specks, then
    prints string grids. Detailed chibi art needs a bigger target than the built-in characters: 34x40 with
-   7 colours worked for the BUG dog (20x32 turned its face into a blur). All frames share one scale, so
+   7 colours worked for both characters (20x32 turned BUG's face into a blur). All frames share one scale, so
    set the width wide enough for the widest frame (arms out on the jump).
 3. Save the output as `src/render/chars/<name>.js` (see `chars/bug.js`: own palette + frames + def), import
    it in `src/render/sprites.js` (`CHAR_DEFS.<name> = ...`) and add the id to `CHARS` / `CHAR_NAMES` in

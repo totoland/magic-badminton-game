@@ -7,7 +7,7 @@ import { solveShot } from '../src/physics.js';
 
 function world(shuttle, opts = {}) {
   const p1 = createPlayer({ side: -1, char: 'lady' });
-  const p2 = createPlayer({ side: 1, char: 'dog' });
+  const p2 = createPlayer({ side: 1, char: 'bug' });
   placePlayer(p1, 0, -150);
   placePlayer(p2, opts.p2x ?? 0, opts.p2z ?? 110);
   return { state: 'RALLY', eventId: 1, stateT: 0, server: -1, cpuServeAt: 1, players: [p1, p2], shuttle: { held: 0, netTouched: false, ...shuttle } };
@@ -40,7 +40,7 @@ test('AI target never leaves its half', () => {
 });
 
 test('CPU serves after its delay with the smash key', () => {
-  const w = { state: 'SERVE', server: 1, stateT: 2, cpuServeAt: 1, eventId: 0, players: [createPlayer({ side: -1, char: 'lady' }), createPlayer({ side: 1, char: 'dog' })], shuttle: { held: 1 } };
+  const w = { state: 'SERVE', server: 1, stateT: 2, cpuServeAt: 1, eventId: 0, players: [createPlayer({ side: -1, char: 'lady' }), createPlayer({ side: 1, char: 'bug' })], shuttle: { held: 1 } };
   const ai = createAI(DIFFICULTY.normal, 1, () => 0.5);
   assert.equal(ai.update(w, 1 / 60).smashPressed, true);
   w.stateT = 0.2;
