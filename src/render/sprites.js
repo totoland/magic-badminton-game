@@ -3,6 +3,7 @@
 // Composites are pre-rendered to offscreen canvases on first use and drawn scaled by depth.
 // Imported characters (tools/sprite-import.html) live in ./chars/ with their own palettes.
 import { BUG_DEF } from './chars/bug.js';
+import { LADY_DEF } from './chars/lady.js';
 
 export const PALETTE = {
   // farm girl
@@ -237,6 +238,7 @@ export const CHAR_DEFS = {
 };
 
 CHAR_DEFS.bug = BUG_DEF;
+CHAR_DEFS.lady = LADY_DEF; // Toto's imported farm girl replaces the built-in one (kept above as LADY_* grids)
 
 function rotateCW(rows) {
   const h = rows.length;
