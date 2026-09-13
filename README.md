@@ -1,5 +1,7 @@
 # Badminton
 
+![FARM GIRL vs BUG on the court](docs/screenshot.png)
+
 Arcade badminton with an NES Tennis style camera: you look over the near player's shoulder, the court
 runs away from you in fake perspective, the opponent plays at the far end. Vanilla JS + Canvas, ES modules,
 no dependencies, no image assets. Characters: FARM GIRL and BUG the dog, both imported pixel art.
