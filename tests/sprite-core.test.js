@@ -79,3 +79,16 @@ test('despeckle removes lone pixels and fills pinholes', () => {
   assert.equal(out.idx[12], -1, 'lone speck removed');
   assert.equal(out.idx[10], 0, 'hole surrounded on all four sides is filled');
 });
+
+test('halo pixels blended with the background do not leak into the palette, and frames share one scale', () => {
+  const big = synth(8);
+  // a "jump" frame: same design with the bottom 3 rows (feet) removed -> shorter content box
+  const shortDesign = DESIGN.slice(0, 12).concat(['....................', '....................', '....................', '....................']);
+  const small = synth(8);
+  for (let y = 12 * 8; y < small.h; y += 1) for (let x = 0; x < small.w; x += 1) { const i = (y * small.w + x) * 4; small.px[i] = 255; small.px[i + 1] = 0; small.px[i + 2] = 255; }
+  void shortDesign;
+  const res = convertSheet([big, small], { tw: 12, th: 15, k: 5, bg: BG, tol: 60, block: 0, despeckle: true, bleed: 3 });
+  for (const c of res.palette) assert.ok(!(c[0] > 150 && c[2] > 150 && c[1] < 90), `magenta-ish palette entry ${c}`);
+  const height = (rows) => rows.filter((r) => r.includes('.') === false || /[^.]/.test(r)).length;
+  assert.ok(height(res.rows[1]) < height(res.rows[0]), 'the shorter frame stays shorter (shared scale)');
+});

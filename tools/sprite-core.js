@@ -1,8 +1,10 @@
 // Pure image processing for the sprite importer (no DOM), so it can be unit-tested in Node.
 // Pixel buffers are RGBA Uint8ClampedArray like ImageData.data.
 
-export const isBg = (px, i, bg, tol) => px[i + 3] < 128
-  || (Math.abs(px[i] - bg[0]) + Math.abs(px[i + 1] - bg[1]) + Math.abs(px[i + 2] - bg[2]) <= tol);
+export const bgDistance = (px, i, bg) => Math.abs(px[i] - bg[0]) + Math.abs(px[i + 1] - bg[1]) + Math.abs(px[i + 2] - bg[2]);
+export const isBg = (px, i, bg, tol) => px[i + 3] < 128 || bgDistance(px, i, bg) <= tol;
+/** Anti-aliased silhouette pixels: partly background, partly content. Neither counted as content nor averaged. */
+export const isBleed = (px, i, bg, tol, bleed) => px[i + 3] >= 128 && bgDistance(px, i, bg) > tol && bgDistance(px, i, bg) <= tol * bleed;
 
 /**
  * Estimate the size of the "fake pixels" in AI pixel art: block boundaries make the horizontal
@@ -78,9 +80,10 @@ export function reduceByBlock(px, w, h, block) {
  * feet on the bottom row. A target pixel is opaque when at least half of its footprint is not background.
  * Returns { w, h, rgb: Float32Array(w*h*3), alpha: Uint8Array(w*h) }.
  */
-export function downsampleCell(src, box, tw, th, bg, tol) {
+export function downsampleCell(src, box, tw, th, bg, tol, opts = {}) {
   const { px, w } = src;
-  const scale = Math.min(tw / box.w, th / box.h);
+  const bleed = opts.bleed ?? 1;
+  const scale = opts.scale ?? Math.min(tw / box.w, th / box.h);
   const dw = Math.max(1, Math.round(box.w * scale));
   const dh = Math.max(1, Math.round(box.h * scale));
   const ox = Math.floor((tw - dw) / 2);
@@ -98,9 +101,10 @@ export function downsampleCell(src, box, tw, th, bg, tol) {
         const i = (y * w + x) * 4;
         total += 1;
         if (isBg(px, i, bg, tol)) continue;
+        if (bleed > 1 && isBleed(px, i, bg, tol, bleed)) { total -= 1; continue; } // ignore halo pixels
         r += px[i]; g += px[i + 1]; b += px[i + 2]; n += 1;
       }
-      if (n * 2 < total || n === 0) continue;
+      if (n === 0 || n * 2 < total) continue;
       const o = (ty + oy) * tw + (tx + ox);
       rgb[o * 3] = r / n; rgb[o * 3 + 1] = g / n; rgb[o * 3 + 2] = b / n;
       alpha[o] = 1;
@@ -187,18 +191,23 @@ export const FREE_LETTERS = 'abegijklmnpqrtuvwxyzAIJKQTUVX0123456789'.split('');
 
 /**
  * Whole pipeline for one sheet. cellsPx = array of { px, w, h } (RGBA of each source cell).
- * opts = { tw, th, k, bg, tol, block (0 = auto), despeckle }
+ * opts = { tw, th, k, bg, tol, block (0 = auto), despeckle, bleed (halo cut-off as a multiple of tol, 1 = off) }
+ * All cells share one scale (the largest frame fits the target), so a crouching frame stays smaller.
  */
 export function convertSheet(cellsPx, opts) {
-  const cells = [];
   const blocks = [];
+  const prepared = [];
   for (const cell of cellsPx) {
     const block = opts.block > 0 ? opts.block : detectBlockSize(cell.px, cell.w, cell.h);
     blocks.push(block);
     const src = reduceByBlock(cell.px, cell.w, cell.h, block);
     const box = contentBox(src.px, src.w, src.h, opts.bg, opts.tol) || { x: 0, y: 0, w: src.w, h: src.h };
-    cells.push(downsampleCell(src, box, opts.tw, opts.th, opts.bg, opts.tol));
+    prepared.push({ src, box });
   }
+  const maxW = Math.max(...prepared.map((c) => c.box.w));
+  const maxH = Math.max(...prepared.map((c) => c.box.h));
+  const scale = Math.min(opts.tw / maxW, opts.th / maxH);
+  const cells = prepared.map((c) => downsampleCell(c.src, c.box, opts.tw, opts.th, opts.bg, opts.tol, { scale, bleed: opts.bleed ?? 1 }));
   const { palette, grids } = quantizeCells(cells, opts.k);
   const cleaned = opts.despeckle ? grids.map(despeckle) : grids;
   return { palette, grids: cleaned, rows: cleaned.map((g) => gridToRows(g, FREE_LETTERS)), blocks };

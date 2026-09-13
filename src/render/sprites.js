@@ -1,6 +1,8 @@
 // Pixel art as string grids. One character per palette entry, '.' = transparent.
 // Each character has a BACK view (near player, seen from behind) and a FRONT view (far player).
 // Composites are pre-rendered to offscreen canvases on first use and drawn scaled by depth.
+// Imported characters (tools/sprite-import.html) live in ./chars/ with their own palettes.
+import { BUG_DEF } from './chars/bug.js';
 
 export const PALETTE = {
   // farm girl
@@ -234,6 +236,8 @@ export const CHAR_DEFS = {
   },
 };
 
+CHAR_DEFS.bug = BUG_DEF;
+
 function rotateCW(rows) {
   const h = rows.length;
   const w = rows[0].length;
@@ -262,8 +266,8 @@ function makeCanvas(w, h) {
 
 const cache = new Map();
 
-/** Render a grid to a canvas (optionally mirrored). Cached by key. */
-export function gridCanvas(key, rows, flip = false) {
+/** Render a grid to a canvas (optionally mirrored) with a palette. Cached by key. */
+export function gridCanvas(key, rows, flip = false, palette = PALETTE) {
   const k = `${key}:${flip ? 'L' : 'R'}`;
   if (cache.has(k)) return cache.get(k);
   const h = rows.length;
@@ -272,7 +276,7 @@ export function gridCanvas(key, rows, flip = false) {
   const ctx = cv.getContext('2d');
   for (let y = 0; y < h; y += 1) {
     for (let x = 0; x < w; x += 1) {
-      const col = PALETTE[rows[y][x]];
+      const col = palette[rows[y][x]];
       if (!col) continue;
       ctx.fillStyle = col;
       ctx.fillRect(flip ? w - 1 - x : x, y, 1, 1);
@@ -311,7 +315,7 @@ export function drawCharacter(ctx, char, view, sx, sy, scale, anim = 'idle', ani
   const legsKey = legsFrame(def, legsAnim, animT);
   if (v.frames) {
     const frame = v.frames[legsKey] || v.frames.stand;
-    ctx.drawImage(gridCanvas(`${char}-${view}-${legsKey}`, frame), x0, y0 + bob, w, Math.round(frame.length * scale));
+    ctx.drawImage(gridCanvas(`${char}-${view}-${legsKey}`, frame, false, def.palette || PALETTE), x0, y0 + bob, w, Math.round(frame.length * scale));
   } else {
     const bodyRows = v.body.length;
     const legs = def.legs[legsKey];

@@ -83,11 +83,14 @@ player, change of ends, and service-box faults (the serve is aimed at the right 
 1. Generate a sprite sheet (prompt template below), 4 columns x 2 rows: top row = back view, bottom row =
    front view; frames left to right = stand, run1, run2, jump. Solid magenta or transparent background.
 2. Open `tools/sprite-import.html` from the dev server (http://localhost:8080/tools/sprite-import.html), drop
-   the PNG, set the target cell size (about 20x32 for a human, 20x22 for a quadruped) and max colours (8),
-   press Convert. It downsamples with nearest-neighbour, quantises the palette and prints string grids.
-3. Paste the palette lines into `PALETTE`, the frames object into `src/render/sprites.js`, register the
-   character in `CHAR_DEFS` (frames mode) and add its id to `CHARS` / `CHAR_NAMES` in `src/config.js`.
-   The racket is drawn by the game at the `hand` anchor, so generate characters with empty hands.
+   the PNG, set the target cell size and max colours, press Convert. It detects the AI's fake pixel size,
+   averages blocks down, quantises the palette with k-means, drops background halo pixels and specks, then
+   prints string grids. Detailed chibi art needs a bigger target than the built-in characters: 34x40 with
+   7 colours worked for the BUG dog (20x32 turned its face into a blur). All frames share one scale, so
+   set the width wide enough for the widest frame (arms out on the jump).
+3. Save the output as `src/render/chars/<name>.js` (see `chars/bug.js`: own palette + frames + def), import
+   it in `src/render/sprites.js` (`CHAR_DEFS.<name> = ...`) and add the id to `CHARS` / `CHAR_NAMES` in
+   `src/config.js`. The racket is drawn by the game at the `hand` anchor, so generate characters with empty hands.
 
 Prompt template (works with most image generators; attach your reference design as the image prompt):
 

@@ -99,5 +99,5 @@ export const KEYS = {
   mute: ['KeyM'],
 };
 
-export const CHARS = ['lady', 'dog'];
-export const CHAR_NAMES = { lady: 'FARM GIRL', dog: 'MALAMUTE' };
+export const CHARS = ['lady', 'dog', 'bug'];
+export const CHAR_NAMES = { lady: 'FARM GIRL', dog: 'MALAMUTE', bug: 'BUG' };
