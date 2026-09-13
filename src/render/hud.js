@@ -159,6 +159,7 @@ export function drawTitle(ctx, world, L) {
     difficulty: ['CPU LEVEL', DIFFICULTY[st.difficulty].label],
     p1: ['P1', CHAR_NAMES[st.chars[0]]],
     p2: ['P2', CHAR_NAMES[st.chars[1]]],
+    stick: ['CONTROLS', st.stickSide === 'right' ? 'STICK RIGHT' : 'STICK LEFT'],
   };
   const M = L.menu;
   MENU_ROWS.forEach((key, i) => {

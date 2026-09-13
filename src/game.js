@@ -10,7 +10,8 @@ export const STATES = Object.freeze({
   TITLE: 'TITLE', SERVE: 'SERVE', RALLY: 'RALLY', POINT: 'POINT', GAMEOVER: 'GAMEOVER',
 });
 
-export const MENU_ROWS = ['mode', 'difficulty', 'p1', 'p2'];
+export const MENU_ROWS = ['mode', 'difficulty', 'p1', 'p2', 'stick'];
+export const STICK_SIDES = ['left', 'right'];
 
 export function createWorld(rng = Math.random) {
   return {
@@ -22,7 +23,7 @@ export function createWorld(rng = Math.random) {
     matchId: 0,
     eventId: 0, // bumps on serve / hit / net touch; the CPU re-plans when it changes
     events: [], // 'serve' | 'hit' | 'smash' | 'net' | 'point' | 'gameover' | 'menu' | 'pause'
-    settings: { mode: '1p', difficulty: 'easy', chars: ['lady', 'bug'] },
+    settings: { mode: '1p', difficulty: 'easy', chars: ['lady', 'bug'], stickSide: 'left' },
     menu: { cursor: 0 },
     players: [createPlayer({ side: -1, char: 'lady' }), createPlayer({ side: 1, char: 'bug' })],
     shuttle: createShuttle(),
@@ -252,6 +253,7 @@ function updateTitle(world, ui) {
     else if (row === 'difficulty') st.difficulty = cycle(DIFFICULTY_ORDER, st.difficulty, delta);
     else if (row === 'p1') st.chars[0] = cycle(CHARS, st.chars[0], delta);
     else if (row === 'p2') st.chars[1] = cycle(CHARS, st.chars[1], delta);
+    else if (row === 'stick') st.stickSide = cycle(STICK_SIDES, st.stickSide, delta);
     world.events.push('menu');
   }
   if (ui.confirm) startMatch(world, -1);

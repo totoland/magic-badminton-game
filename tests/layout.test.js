@@ -91,3 +91,27 @@ test('rotate button exists in portrait, PORT button in landscape touch, neither 
   assert.ok(un && un.action === 'unrotate');
   assert.equal(buildLayout('landscape', false).rotatePrompt, null);
 });
+
+test('stick side setting mirrors the play controls and keeps system buttons in place', () => {
+  for (const orientation of ['portrait', 'landscape']) {
+    const L = buildLayout(orientation, true, { stickSide: 'left' });
+    const R = buildLayout(orientation, true, { stickSide: 'right' });
+    assert.ok(R.joystick.cx > R.frame.w / 2 && L.joystick.cx < L.frame.w / 2, `${orientation}: stick swaps sides`);
+    const smashL = L.buttons.find((b) => b.id === 'smash');
+    const smashR = R.buttons.find((b) => b.id === 'smash');
+    assert.equal(smashR.x, R.frame.w - smashL.x - smashL.w, `${orientation}: smash mirrored`);
+    for (const id of ['pause', 'mute']) assert.equal(R.buttons.find((b) => b.id === id).x, L.buttons.find((b) => b.id === id).x, `${orientation}: ${id} stays`);
+    for (const a of R.buttons) for (const b of R.buttons) if (a !== b) assert.ok(!rectsOverlap(a, b), `${orientation} right: ${a.id} overlaps ${b.id}`);
+    for (const b of R.buttons) assert.ok(within(b, R.frame));
+    const j = R.joystick;
+    for (const b of R.buttons.filter((x) => !x.system)) {
+      const nx = Math.max(b.x, Math.min(j.cx, b.x + b.w)), ny = Math.max(b.y, Math.min(j.cy, b.y + b.h));
+      assert.ok(Math.hypot(nx - j.cx, ny - j.cy) > j.grab, `${orientation} right: stick overlaps ${b.id}`);
+    }
+    if (orientation === 'landscape') for (const b of R.buttons) assert.ok(!rectsOverlap(b, R.scene), `${b.id} over the court`);
+  }
+  // five menu rows still fit above START in portrait
+  const P = buildLayout('portrait', true);
+  const last = P.menu.rows[P.menu.rows.length - 1];
+  assert.ok(last.y + last.h <= P.start.y, 'menu rows clear the START button');
+});

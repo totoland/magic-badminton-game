@@ -48,11 +48,11 @@ export function stickHit(L, p) {
   return !!j && Math.hypot(p.x - j.cx, p.y - j.cy) <= j.grab;
 }
 
-export function landscapeLayout(touch) {
+export function landscapeLayout(touch, opts = {}) {
   const W = SCENE.w;
   const ox = touch ? LANDSCAPE_GUTTER : 0; // scene offset inside the frame
   const cx = ox + W / 2;
-  const rows = MENU_ROWS.map((_, i) => ({ x: ox, y: 68 + i * 14 - 3, w: W, h: 14 }));
+  const rows = MENU_ROWS.map((_, i) => ({ x: ox, y: 66 + i * 13 - 3, w: W, h: 13 }));
   return {
     name: 'landscape',
     portrait: false,
@@ -65,13 +65,12 @@ export function landscapeLayout(touch) {
     hint: { cx, y: 96, y2: 110, size: 8 },
     banner: { x: ox + 60, y: 92, w: 200, h: 52, size: 16, sub: 8 },
     title: { cx, y: 10, size: 24, subY: 40, subSize: 8 },
-    menu: { rows, labelX: ox + 44, valueX: ox + 276, cursorX: ox + 30, size: 8, textDy: 3 },
-    start: { x: ox + 60, y: 128, w: 200, h: 22, size: 8, drawBox: false },
-    help: { y: 152, dy: 11, size: 8, rulesY: 266 },
+    menu: { rows, labelX: ox + 44, valueX: ox + 276, cursorX: ox + 30, size: 8, textDy: 2 },
+    start: { x: ox + 60, y: 132, w: 200, h: 22, size: 8, drawBox: false },
+    help: { y: 156, dy: 11, size: 8, rulesY: 266 },
     gameover: { box: { x: ox + 30, y: 86, w: 260, h: 64 }, size: 16, sub: 8, rematch: null, back: null },
     pause: { cx, y: 106, size: 16, subY: 132, sub: 8, resume: null },
-    buttons: touch ? LANDSCAPE_BUTTONS : [],
-    joystick: touch ? LANDSCAPE_STICK : null,
+    ...mirrorControls(touch ? LANDSCAPE_BUTTONS : [], touch ? LANDSCAPE_STICK : null, W + ox * 2, opts.stickSide),
     buttonText: 8,
     buttonAlpha: 1,
     outline: 1,
@@ -80,12 +79,12 @@ export function landscapeLayout(touch) {
   };
 }
 
-export function portraitLayout(touch) {
+export function portraitLayout(touch, opts = {}) {
   const W = 640;
   const sceneY = 130;
   const sceneH = SCENE.h * 2;
   const panelY = sceneY + sceneH; // 690
-  const rows = MENU_ROWS.map((_, i) => ({ x: 24, y: 712 + i * 76, w: W - 48, h: 66 }));
+  const rows = MENU_ROWS.map((_, i) => ({ x: 24, y: 708 + i * 66, w: W - 48, h: 58 }));
   return {
     name: 'portrait',
     portrait: true,
@@ -100,8 +99,8 @@ export function portraitLayout(touch) {
     hint: { cx: W / 2, y: 68, y2: 98, size: 24 },
     banner: { x: 80, y: sceneY + 230, w: 480, h: 100, size: 32, sub: 24 },
     title: { cx: W / 2, y: 22, size: 40, subY: 76, subSize: 24 },
-    menu: { rows, labelX: 48, valueX: 592, cursorX: 30, size: 24, textDy: 21 },
-    start: { x: 160, y: 1030, w: 320, h: 88, size: 32, drawBox: true },
+    menu: { rows, labelX: 48, valueX: 592, cursorX: 30, size: 24, textDy: 17 },
+    start: { x: 160, y: 1046, w: 320, h: 80, size: 32, drawBox: true },
     help: { y: 0, dy: 0, size: 16, rulesY: 108 },
     gameover: {
       box: { x: 40, y: sceneY + 220, w: 560, h: 110 }, size: 32, sub: 24,
@@ -109,8 +108,7 @@ export function portraitLayout(touch) {
       back: { x: 80, y: 890, w: 480, h: 110, label: 'TITLE' },
     },
     pause: { cx: W / 2, y: sceneY + 250, size: 40, subY: sceneY + 310, sub: 24, resume: { x: 80, y: 740, w: 480, h: 110, label: 'RESUME' } },
-    buttons: touch ? [...PORTRAIT_BUTTONS, ...PORTRAIT_SYSTEM_BUTTONS] : PORTRAIT_SYSTEM_BUTTONS,
-    joystick: touch ? PORTRAIT_STICK : null,
+    ...mirrorControls(touch ? [...PORTRAIT_BUTTONS, ...PORTRAIT_SYSTEM_BUTTONS] : PORTRAIT_SYSTEM_BUTTONS, touch ? PORTRAIT_STICK : null, W, opts.stickSide),
     buttonText: 24,
     buttonAlpha: 1,
     outline: 3,
@@ -123,8 +121,18 @@ export function portraitLayout(touch) {
   };
 }
 
-export function buildLayout(orientation, touch) {
-  return orientation === 'portrait' ? portraitLayout(touch) : landscapeLayout(touch);
+/** Play controls mirrored across the frame when the stick should be on the right; system buttons stay put. */
+function mirrorControls(buttons, joystick, frameW, stickSide) {
+  if (stickSide !== 'right') return { buttons, joystick };
+  return {
+    buttons: buttons.map((b) => (b.system ? b : { ...b, x: frameW - b.x - b.w })),
+    joystick: joystick ? { ...joystick, cx: frameW - joystick.cx } : null,
+  };
+}
+
+/** opts.stickSide: 'left' (default) | 'right' */
+export function buildLayout(orientation, touch, opts = {}) {
+  return orientation === 'portrait' ? portraitLayout(touch, opts) : landscapeLayout(touch, opts);
 }
 
 /** Play controls (stick / lift / drop / smash) only exist during a live match. */

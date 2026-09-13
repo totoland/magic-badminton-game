@@ -56,7 +56,8 @@ smashes connect.
 Open the same URL on a phone. In portrait the court sits in the middle of a 9:16 frame with a large
 score header above and touch controls below: a virtual joystick for the left thumb (4-way run; its
 horizontal tilt at contact aims the shot) and `LOB`, `DROP`, and a big `SMASH` for the right thumb.
-Tap a menu row to change it, tap START to play, `II` pauses, `M` mutes. Landscape on a touch device
+Tap a menu row to change it, tap START to play, `II` pauses, `M` mutes. The CONTROLS row on the title
+swaps the joystick and the buttons (STICK LEFT / STICK RIGHT) for left-handed play; the choice is remembered. Landscape on a touch device
 widens the frame and puts the joystick in the left gutter and the buttons in the right one, so the
 court stays unobstructed. On the first portrait visit a prompt offers to play in landscape: ROTATE goes
 fullscreen and locks the orientation where the browser allows it (Android Chrome); iOS has no orientation

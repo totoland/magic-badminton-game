@@ -21,10 +21,13 @@ const sctx = screen.getContext('2d');
 let touchMode = window.matchMedia ? window.matchMedia('(pointer: coarse)').matches : false;
 let L = buildLayout('landscape', touchMode);
 let cssScale = 1;
+const STICK_KEY = 'badminton.stickSide';
+const readStickSide = () => { try { return localStorage.getItem(STICK_KEY) === 'right' ? 'right' : 'left'; } catch { return 'left'; } };
+const writeStickSide = (v) => { try { localStorage.setItem(STICK_KEY, v); } catch { /* private mode */ } };
 
 function resize() {
   const portrait = window.innerHeight > window.innerWidth;
-  L = buildLayout(portrait ? 'portrait' : 'landscape', touchMode);
+  L = buildLayout(portrait ? 'portrait' : 'landscape', touchMode, { stickSide: world.settings.stickSide });
   if (frame.width !== L.frame.w || frame.height !== L.frame.h) {
     frame.width = L.frame.w;
     frame.height = L.frame.h;
@@ -47,6 +50,8 @@ window.addEventListener('orientationchange', resize);
 
 const kb = new Keyboard().attach(window);
 const world = createWorld();
+world.settings.stickSide = readStickSide();
+let stickSide = world.settings.stickSide;
 const renderer = createRenderer(scene);
 const prefs = { rotatePrompt: 'closed', lockSupported: lockSupported(), toast: '', toastUntil: 0 };
 function toast(msg, seconds = 2.5) { prefs.toast = msg; prefs.toastUntil = world.time + seconds; }
@@ -110,6 +115,12 @@ function tick(dt) {
   for (const ev of world.events) audio.play(ev);
   world.events.length = 0;
   kb.endFrame();
+  if (world.settings.stickSide !== stickSide) { // menu changed the controls side
+    stickSide = world.settings.stickSide;
+    writeStickSide(stickSide);
+    touch.releaseAll();
+    resize();
+  }
 }
 
 function compose() {
